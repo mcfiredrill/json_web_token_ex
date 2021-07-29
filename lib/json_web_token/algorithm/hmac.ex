@@ -18,7 +18,7 @@ defmodule JsonWebToken.Algorithm.Hmac do
   """
   def sign(sha_bits, shared_key, signing_input) do
     validate_params(sha_bits, shared_key)
-    :crypto.hmac(sha_bits, shared_key, signing_input)
+    hmac_fun(sha_bits, shared_key, signing_input)
   end
 
   @doc """
@@ -48,4 +48,10 @@ defmodule JsonWebToken.Algorithm.Hmac do
 
   defp weak_key(true), do: raise "Key size smaller than the hash output size"
   defp weak_key(_), do: :ok
+
+  if Code.ensure_loaded?(:crypto) and function_exported?(:crypto, :mac, 4) do
+    defp hmac_fun(digest, key), do: &:crypto.mac(:hmac, digest, key, &1)
+  else
+    defp hmac_fun(digest, key), do: &:crypto.hmac(digest, key, &1)
+  end
 end
